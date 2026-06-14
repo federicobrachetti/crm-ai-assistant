@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM AI Assistant</title>
+<style>
+:root{--blue:#1A3A5C;--blue-mid:#2E5F8A;--blue-light:#E8F0F8;--accent:#0F7EC4;--green:#1A7A4A;--green-bg:#E8F5EE;--amber:#8A5F00;--amber-bg:#FFF4DC;--red:#A02020;--red-bg:#FEF0F0;--slate:#4A6080;--slate-bg:#EFF4F9;--border:#D0DCE8;--text:#1A2A3A;--muted:#6A7E90;--bg:#F2F6FA;--white:#FFFFFF;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem}
+.topbar{background:var(--blue);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:18px;height:18px;fill:#fff}
+.brand-title{font-size:15px;font-weight:600;color:#fff}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.6)}
+.status{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.7)}
+.dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.app{max-width:480px;margin:0 auto;padding:1.25rem}
+.search-wrap{position:relative;margin-bottom:1.25rem}
+.si{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.si svg{width:17px;height:17px}
+#search{width:100%;padding:13px 13px 13px 40px;border:1px solid var(--border);border-radius:var(--r);font-size:15px;background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+#search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,126,196,.1)}
+#search::placeholder{color:var(--muted)}
+#dd{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;display:none;z-index:50}
+#dd.show{display:block}
+.ddi{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ddi:last-child{border-bottom:none}
+.ddi:hover{background:var(--blue-light)}
+.dda{width:36px;height:36px;border-radius:50%;background:var(--blue-light);color:var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.ddn{font-size:14px;font-weight:500;color:var(--text)}
+.ddc{font-size:12px;color:var(--muted);margin-top:1px}
+.empty{text-align:center;padding:4rem 1rem;color:var(--muted)}
+.empty svg{width:48px;height:48px;margin-bottom:1rem;opacity:.4}
+.empty p{font-size:14px;line-height:1.7}
+.loading{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;display:none}
+.spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+#scheda{display:none}
+#scheda.show{display:block}
+.ch{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.av{width:50px;height:50px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex-shrink:0}
+.cn{font-size:17px;font-weight:600;color:var(--text)}
+.cc{font-size:13px;color:var(--muted);margin-top:2px}
+.cm{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+.bp{background:var(--green-bg);color:var(--green)}
+.bn{background:var(--amber-bg);color:var(--amber)}
+.ba{background:var(--slate-bg);color:var(--slate)}
+.br{background:var(--red-bg);color:var(--red)}
+.lm{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.lm svg{width:13px;height:13px}
+.sec{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sh svg{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.st{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sb{font-size:14px;color:var(--text);line-height:1.65}
+ul.il{list-style:none}
+ul.il li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.5}
+ul.il li:last-child{border-bottom:none;padding-bottom:0}
+.ib{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:7px}
+.ar{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
+.ar:last-child{border-bottom:none;padding-bottom:0}
+.ac{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;margin-top:2px}
+.al{font-size:14px;color:var(--text);line-height:1.5;flex:1}
+.ad{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:3px}
+.ad svg{width:11px;height:11px}
+.nd{font-size:13px;color:var(--muted);font-style:italic;padding:4px 0}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:var(--rs);padding:8px 14px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:1.25rem;width:100%;justify-content:center}
+.back-btn:hover{background:var(--blue-light);color:var(--blue-mid)}
+.back-btn svg{width:15px;height:15px}
+/* NUOVO INCONTRO */
+.new-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,126,196,.3)}
+.new-btn:hover{background:var(--blue-mid)}
+.new-btn svg{width:18px;height:18px}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:var(--r) var(--r) 0 0;padding:1.5rem 1.25rem 2rem;width:100%;max-width:480px;max-height:92vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem}
+.modal-close{float:right;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;margin-top:-4px}
+/* RECORDER */
+.rec-area{border:2px dashed var(--border);border-radius:var(--r);padding:2rem 1rem;text-align:center;margin-bottom:1rem;transition:border-color .2s}
+.rec-area.recording{border-color:var(--red);background:var(--red-bg)}
+.rec-btn{width:72px;height:72px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 4px 16px rgba(15,126,196,.3);transition:all .2s}
+.rec-btn.recording{background:var(--red);}
+.rec-btn svg{width:28px;height:28px;fill:#fff}
+.rec-timer{font-size:28px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.rec-hint{font-size:13px;color:var(--muted)}
+.transcript-box{width:100%;min-height:120px;padding:12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;color:var(--text);line-height:1.6;resize:vertical;font-family:inherit;background:var(--bg);margin-bottom:1rem}
+.transcript-box:focus{outline:none;border-color:var(--accent)}
+.prompt-box{background:var(--blue-light);border:1px solid var(--border);border-radius:var(--rs);padding:1rem;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:1rem;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.modal-actions{display:flex;flex-direction:column;gap:10px}
+.btn-primary{padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:var(--blue-mid)}
+.btn-secondary{padding:12px;background:none;color:var(--accent);border:1.5px solid var(--accent);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-secondary:hover{background:var(--blue-light)}
+.step-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;margin-top:1rem}
+.modal-sep{border:none;border-top:1px solid var(--border);margin:1rem 0}
+.paste-area{width:100%;min-height:100px;padding:12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;color:var(--text);line-height:1.6;resize:vertical;font-family:inherit;background:var(--bg);margin-bottom:1rem}
+.paste-area:focus{outline:none;border-color:var(--accent)}
+.save-btn{padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.save-btn:hover{opacity:.9}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
+.success-msg{background:var(--green-bg);color:var(--green);border-radius:var(--rs);padding:12px 16px;font-size:14px;font-weight:500;text-align:center;display:none}
+.error-msg{background:var(--red-bg);color:var(--red);border-radius:var(--rs);padding:12px 16px;font-size:13px;display:none}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
+    <div><div class="brand-title">CRM AI Assistant</div><div class="brand-sub">Scheda pre-incontro</div></div>
+  </div>
+  <div class="status"><div class="dot"></div><span id="st">Connessione...</span></div>
+</div>
+
+<div class="app">
+  <div class="search-wrap">
+    <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <input type="text" id="search" placeholder="Cerca cliente..." autocomplete="off"/>
+    <div id="dd"></div>
+  </div>
+  <div class="empty" id="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <p>Cerca un cliente per aprire<br>la scheda pre-incontro</p>
+  </div>
+  <div class="loading" id="loading"><div class="spin"></div>Caricamento...</div>
+  <div id="scheda"></div>
+</div>
+
+<!-- MODAL NUOVO INCONTRO -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modal-title">Nuovo incontro</div>
+    <div class="modal-sub" id="modal-sub">Registra il memo vocale dopo l'incontro</div>
+
+    <!-- STEP 1: Registrazione -->
+    <div id="step1">
+      <div class="rec-area" id="rec-area">
+        <button class="rec-btn" id="rec-btn" onclick="toggleRec()">
+          <svg id="rec-icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <div class="rec-timer" id="rec-timer">0:00</div>
+        <div class="rec-hint" id="rec-hint">Tocca per iniziare la registrazione</div>
+      </div>
+
+      <div class="step-label">Trascrizione (modificabile)</div>
+      <textarea class="transcript-box" id="transcript" placeholder="La trascrizione apparirà qui durante la registrazione. Puoi modificarla o incollarla manualmente."></textarea>
+
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="goToStep2()" id="btn-next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Genera scheda con Claude
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Prompt + incolla scheda -->
+    <div id="step2" style="display:none">
+      <div class="step-label">1. Copia il prompt e incollalo in Claude.ai</div>
+      <div class="prompt-box" id="prompt-box"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-copy-prompt" onclick="copyPrompt()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copia prompt
+        </button>
+        <button class="btn-secondary" onclick="openClaude()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri Claude.ai
+        </button>
+      </div>
+
+      <hr class="modal-sep">
+
+      <div class="step-label">2. Incolla qui l'output di Claude</div>
+      <textarea class="paste-area" id="ai-output" placeholder="Incolla qui la scheda generata da Claude..."></textarea>
+
+      <div class="error-msg" id="error-msg"></div>
+      <div class="success-msg" id="success-msg">✓ Incontro salvato in Airtable</div>
+
+      <button class="save-btn" id="save-btn" onclick="saveToAirtable()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Salva in Airtable
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN = "patdA1uCAKVfuj1uB.f2ce0ae9ca5f983013fa2d73712110bb203da681fe882d4f7ae61107cc5da51b";
+const BASE  = "appJC0nI2jmOlnX2x";
+const ROOT  = "https://api.airtable.com/v0";
+const HDR   = { Authorization: "Bearer " + TOKEN };
+
+let clienti  = [];
+let incontri = [];
+let azioni   = [];
+let currentCliente = null;
+
+// PROMPT fisso
+const PROMPT_TEMPLATE = `Sei un assistente specializzato nel supporto ai consulenti finanziari.
+Ricevi la trascrizione di un memo vocale registrato dal consulente subito dopo un incontro con un cliente.
+
+CLIENTE: {nome} — {azienda}
+OBIETTIVI: {obiettivi}
+INCONTRO PRECEDENTE: {precedente}
+
+TRASCRIZIONE MEMO:
+{trascrizione}
+
+Genera una scheda strutturata con:
+
+1. SINTESI INCONTRO
+   Cosa è emerso in 3-5 righe. Solo i fatti rilevanti.
+
+2. SEGNALI CHIAVE
+   - Preoccupazioni espresse
+   - Opportunità individuate
+   - Obiezioni o resistenze
+
+3. SENTIMENT
+   Scegli uno: Positivo / Neutro / In attesa / A rischio
+   Motivazione in una riga.
+
+4. PROSSIME AZIONI
+   Lista con scadenza. Es: "Inviare proposta entro venerdì"
+
+5. DOMANDE PER IL PROSSIMO INCONTRO
+   2-3 domande che il consulente dovrebbe porre.
+
+6. AGGIORNAMENTO PROFILO CLIENTE
+   Nuove informazioni su obiettivi, vincoli, preferenze emerse.
+
+Rispondi SOLO con la scheda. Niente intro, niente commenti.`;
+
+// SPEECH RECOGNITION
+let recognition = null;
+let isRecording = false;
+let timerInterval = null;
+let seconds = 0;
+
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'it-IT';
+  r.continuous = true;
+  r.interimResults = true;
+  let finalText = '';
+  r.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+      else interim = e.results[i][0].transcript;
+    }
+    document.getElementById('transcript').value = finalText + interim;
+  };
+  r.onerror = (e) => {
+    console.warn('Speech error:', e.error);
+    stopRec();
+  };
+  return r;
+}
+
+function toggleRec() {
+  if (isRecording) stopRec(); else startRec();
+}
+
+function startRec() {
+  recognition = initSpeech();
+  isRecording = true;
+  seconds = 0;
+  document.getElementById('rec-area').classList.add('recording');
+  document.getElementById('rec-btn').classList.add('recording');
+  document.getElementById('rec-icon').innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2"/>';
+  document.getElementById('rec-hint').textContent = 'Registrazione in corso... tocca per fermare';
+  timerInterval = setInterval(() => {
+    seconds++;
+    const m = Math.floor(seconds/60);
+    const s = seconds%60;
+    document.getElementById('rec-timer').textContent = m+':'+(s<10?'0':'')+s;
+  }, 1000);
+  if (recognition) recognition.start();
+  else document.getElementById('rec-hint').textContent = 'Browser non supportato — scrivi il memo qui sotto';
+}
+
+function stopRec() {
+  isRecording = false;
+  clearInterval(timerInterval);
+  document.getElementById('rec-area').classList.remove('recording');
+  document.getElementById('rec-btn').classList.remove('recording');
+  document.getElementById('rec-icon').innerHTML = '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>';
+  document.getElementById('rec-hint').textContent = 'Registrazione completata. Modifica se necessario.';
+  if (recognition) recognition.stop();
+}
+
+function goToStep2() {
+  const trascrizione = document.getElementById('transcript').value.trim();
+  if (!trascrizione) { alert('Inserisci o registra il memo prima di procedere.'); return; }
+  const c = currentCliente;
+  const f = c.fields;
+  const inc = incontri.filter(r => (r.fields["Cliente"]||[]).some(l => (typeof l === "string" ? l : l.id) === c.id))
+                       .sort((a,b) => new Date(b.fields["Data"]||0) - new Date(a.fields["Data"]||0));
+  const precedente = inc[0]?.fields["Sintesi"] || "Nessun incontro precedente registrato";
+  const prompt = PROMPT_TEMPLATE
+    .replace('{nome}', f["Nome"]||"")
+    .replace('{azienda}', f["Azienda"]||"")
+    .replace('{obiettivi}', f["Obiettivi"]||"")
+    .replace('{precedente}', precedente)
+    .replace('{trascrizione}', trascrizione);
+  document.getElementById('prompt-box').textContent = prompt;
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('modal-sub').textContent = 'Copia il prompt → Claude.ai → incolla l\'output';
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-box').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-prompt');
+    btn.textContent = '✓ Copiato!';
+    setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copia prompt'; }, 2000);
+  });
+}
+
+function openClaude() {
+  window.open('https://claude.ai', '_blank');
+}
+
+async function saveToAirtable() {
+  const output = document.getElementById('ai-output').value.trim();
+  if (!output) { showError('Incolla prima la scheda generata da Claude.'); return; }
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio...';
+  try {
+    // Estrai sentiment dall'output
+    let sentiment = "Neutro";
+    if (/positivo/i.test(output)) sentiment = "Positivo";
+    else if (/rischio/i.test(output)) sentiment = "A rischio";
+    else if (/attesa/i.test(output)) sentiment = "In attesa";
+
+    // Estrai prossime azioni
+    const azioniMatch = output.match(/4\.\s*PROSSIME AZIONI[\s\S]*?(?=5\.|$)/i);
+    const prossimeAzioni = azioniMatch ? azioniMatch[0].replace(/4\.\s*PROSSIME AZIONI\s*/i,'').trim() : "";
+
+    // Estrai sintesi
+    const sintesiMatch = output.match(/1\.\s*SINTESI INCONTRO[\s\S]*?(?=2\.|$)/i);
+    const sintesi = sintesiMatch ? sintesiMatch[0].replace(/1\.\s*SINTESI INCONTRO\s*/i,'').trim() : output.slice(0,300);
+
+    // 1. Crea record Incontro
+    const oggi = new Date().toISOString().split('T')[0];
+    const resInc = await fetch(ROOT+"/"+BASE+"/Incontri", {
+      method: "POST",
+      headers: {...HDR, "Content-Type": "application/json"},
+      body: JSON.stringify({ records: [{ fields: {
+        "Cliente": [currentCliente.id],
+        "Data": oggi,
+        "Sintesi": sintesi,
+        "Scheda AI": output,
+        "Prossime azioni": prossimeAzioni,
+        "Sentiment": sentiment,
+        "Elaborato": true
+      }}]})
+    });
+    if (!resInc.ok) throw new Error("Errore creazione incontro");
+
+    // 2. Aggiorna sentiment cliente
+    await fetch(ROOT+"/"+BASE+"/Clienti/"+currentCliente.id, {
+      method: "PATCH",
+      headers: {...HDR, "Content-Type": "application/json"},
+      body: JSON.stringify({ fields: {
+        "Sentiment attuale": sentiment,
+        "Ultimo incontro": oggi
+      }})
+    });
+
+    document.getElementById('success-msg').style.display = 'block';
+    document.getElementById('error-msg').style.display = 'none';
+    btn.textContent = '✓ Salvato';
+
+    // Ricarica dati e aggiorna scheda dopo 1.5s
+    setTimeout(async () => {
+      await reloadData();
+      closeModal();
+      pick(currentCliente.id);
+    }, 1500);
+
+  } catch(e) {
+    showError("Errore: " + e.message);
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Salva in Airtable';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function openModal(cliente) {
+  currentCliente = cliente;
+  document.getElementById('modal-title').textContent = "Nuovo incontro — " + (cliente.fields["Nome"]||"");
+  document.getElementById('modal-sub').textContent = "Registra il memo vocale dopo l'incontro";
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('transcript').value = '';
+  document.getElementById('ai-output').value = '';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('rec-timer').textContent = '0:00';
+  document.getElementById('rec-hint').textContent = 'Tocca per iniziare la registrazione';
+  document.getElementById('rec-area').classList.remove('recording');
+  document.getElementById('rec-btn').classList.remove('recording');
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() {
+  if (isRecording) stopRec();
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// FETCH & RENDER
+async function fetchAll(table, fields) {
+  let records = [], offset = null;
+  do {
+    const params = fields.map(f => "fields[]=" + encodeURIComponent(f));
+    if (offset) params.push("offset=" + offset);
+    params.push("pageSize=100");
+    const r = await fetch(ROOT+"/"+BASE+"/"+encodeURIComponent(table)+"?"+params.join("&"), {headers:HDR});
+    const data = await r.json();
+    records = records.concat(data.records||[]);
+    offset = data.offset||null;
+  } while(offset);
+  return records;
+}
+
+async function reloadData() {
+  const [c,i,a] = await Promise.all([
+    fetchAll("Clienti",  ["Nome","Azienda","Obiettivi","Vincoli","Sentiment attuale","Ultimo incontro"]),
+    fetchAll("Incontri", ["Cliente","Data","Sintesi","Prossime azioni","Scheda AI"]),
+    fetchAll("Azioni",   ["Cliente","Descrizione","Scadenza","Completata"])
+  ]);
+  clienti=c; incontri=i; azioni=a;
+}
+
+function ini(nome){return(nome||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase()}
+function badgeClass(s){return{Positivo:"bp",Neutro:"bn","In attesa":"ba","A rischio":"br"}[s]||"bn"}
+function fmtDate(d){if(!d)return null;return new Date(d).toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"})}
+function parseLines(t){return(t||"").split("\n").map(l=>l.replace(/^[-•*\d.]\s*/,"").trim()).filter(Boolean)}
+
+const ICO={
+  user:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  notes:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  list:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+  cal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  back:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  mic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
+};
+
+function render(cliente, incontro, azioniCliente) {
+  const f=cliente.fields, fi=incontro?incontro.fields:{};
+  const nom=f["Nome"]||"", azt=f["Azienda"]||"";
+  const sen=(f["Sentiment attuale"]||{}).name||f["Sentiment attuale"]||"Neutro";
+  const obi=f["Obiettivi"]||"", vin=f["Vincoli"]||"";
+  const dat=fi["Data"]?fmtDate(fi["Data"]):null;
+  const sin=fi["Sintesi"]||null;
+  const pro=parseLines(fi["Prossime azioni"]||"");
+
+  const oHTML=[obi?"<strong>Obiettivi:</strong> "+obi:null,vin?"<strong>Vincoli:</strong> "+vin:null].filter(Boolean).join("<br><br>")||'<span class="nd">Nessuna informazione</span>';
+  const pHTML=pro.length?pro.map(a=>`<li><div class="ib"></div><span>${a}</span></li>`).join(""):`<li><span class="nd">Nessuna azione dal precedente incontro</span></li>`;
+  const az=azioniCliente.filter(a=>!a.fields["Completata"]);
+  const aHTML=az.length?az.map(a=>{const d=a.fields["Scadenza"]?fmtDate(a.fields["Scadenza"]):null;return`<div class="ar"><div class="ac"></div><div><div class="al">${a.fields["Descrizione"]||""}</div>${d?`<div class="ad">${ICO.clock}${d}</div>`:""}</div></div>`;}).join(""):`<div class="nd">Nessuna azione in sospeso</div>`;
+
+  document.getElementById("scheda").innerHTML=`
+    <button class="back-btn" onclick="reset()">${ICO.back} Cerca un altro cliente</button>
+    <div class="ch">
+      <div class="av">${ini(nom)}</div>
+      <div><div class="cn">${nom}</div><div class="cc">${azt}</div>
+        <div class="cm"><span class="badge ${badgeClass(sen)}">${sen}</span>${dat?`<span class="lm">${ICO.cal}Ultimo incontro: ${dat}</span>`:""}</div>
+      </div>
+    </div>
+    <button class="new-btn" onclick="openModal(currentCliente)">${ICO.mic} Nuovo memo incontro</button>
+    <div class="sec"><div class="sh">${ICO.user}<span class="st">Chi è il cliente</span></div><div class="sb">${oHTML}</div></div>
+    <div class="sec"><div class="sh">${ICO.notes}<span class="st">Ultimo incontro</span></div><div class="sb">${sin||'<span class="nd">Nessun incontro registrato</span>'}</div></div>
+    <div class="sec"><div class="sh">${ICO.list}<span class="st">Prossime azioni</span></div><ul class="il">${pHTML}</ul></div>
+    <div class="sec"><div class="sh">${ICO.check}<span class="st">Azioni in sospeso</span></div>${aHTML}</div>`;
+  document.getElementById("scheda").classList.add("show");
+}
+
+function reset(){
+  document.getElementById("search").value="";
+  const s=document.getElementById("scheda");
+  s.classList.remove("show");s.innerHTML="";
+  document.getElementById("empty").style.display="block";
+  document.getElementById("search").focus();
+  currentCliente=null;
+}
+
+function showDropdown(items){
+  const dd=document.getElementById("dd");
+  if(!items.length){dd.classList.remove("show");return;}
+  dd.innerHTML=items.map(c=>`<div class="ddi" data-id="${c.id}" tabindex="0"><div class="dda">${ini(c.fields["Nome"]||"")}</div><div><div class="ddn">${c.fields["Nome"]||""}</div><div class="ddc">${c.fields["Azienda"]||""}</div></div></div>`).join("");
+  dd.classList.add("show");
+  dd.querySelectorAll(".ddi").forEach(el=>{
+    el.addEventListener("click",()=>pick(el.dataset.id));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter")pick(el.dataset.id);});
+  });
+}
+
+function pick(clienteId){
+  const c=clienti.find(x=>x.id===clienteId);
+  if(!c)return;
+  currentCliente=c;
+  document.getElementById("search").value=c.fields["Nome"]||"";
+  document.getElementById("dd").classList.remove("show");
+  document.getElementById("empty").style.display="none";
+  document.getElementById("scheda").classList.remove("show");
+  document.getElementById("loading").style.display="block";
+  const inc=incontri.filter(r=>(r.fields["Cliente"]||[]).some(l=>(typeof l==="string"?l:l.id)===clienteId)).sort((a,b)=>new Date(b.fields["Data"]||0)-new Date(a.fields["Data"]||0));
+  const az=azioni.filter(r=>(r.fields["Cliente"]||[]).some(l=>(typeof l==="string"?l:l.id)===clienteId));
+  document.getElementById("loading").style.display="none";
+  render(c,inc[0]||null,az);
+}
+
+async function init(){
+  try{
+    document.getElementById("st").textContent="Caricamento...";
+    await reloadData();
+    document.getElementById("st").textContent=clienti.length+" clienti";
+    const inp=document.getElementById("search");
+    inp.addEventListener("input",()=>{
+      const q=inp.value.trim().toLowerCase();
+      if(!q){document.getElementById("dd").classList.remove("show");return;}
+      showDropdown(clienti.filter(x=>(x.fields["Nome"]||"").toLowerCase().includes(q)||(x.fields["Azienda"]||"").toLowerCase().includes(q)));
+    });
+    inp.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("dd").classList.remove("show");inp.blur();}});
+    document.addEventListener("click",e=>{if(!e.target.closest(".search-wrap"))document.getElementById("dd").classList.remove("show");});
+  }catch(e){
+    document.getElementById("st").textContent="Errore";
+    document.getElementById("empty").innerHTML=`<p style="font-size:14px;color:#a02020">Errore: ${e.message}</p>`;
+  }
+}
+
+document.getElementById("modal-overlay").addEventListener("click",function(e){if(e.target===this)closeModal();});
+init();
+</script>
+</body>
+</html>
