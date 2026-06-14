@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM AI Assistant</title>
+<style>
+:root{--blue:#1A3A5C;--blue-mid:#2E5F8A;--blue-light:#E8F0F8;--accent:#0F7EC4;--green:#1A7A4A;--green-bg:#E8F5EE;--amber:#8A5F00;--amber-bg:#FFF4DC;--red:#A02020;--red-bg:#FEF0F0;--slate:#4A6080;--slate-bg:#EFF4F9;--border:#D0DCE8;--text:#1A2A3A;--muted:#6A7E90;--bg:#F2F6FA;--white:#FFFFFF;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:3rem}
+.topbar{background:var(--blue);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:18px;height:18px;fill:#fff}
+.brand-title{font-size:15px;font-weight:600;color:#fff}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.6)}
+.status{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.7)}
+.dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.app{max-width:480px;margin:0 auto;padding:1.25rem}
+.search-wrap{position:relative;margin-bottom:1.25rem}
+.si{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.si svg{width:17px;height:17px}
+#search{width:100%;padding:13px 13px 13px 40px;border:1px solid var(--border);border-radius:var(--r);font-size:15px;background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+#search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,126,196,.1)}
+#search::placeholder{color:var(--muted)}
+#dd{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;display:none;z-index:50}
+#dd.show{display:block}
+.ddi{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ddi:last-child{border-bottom:none}
+.ddi:hover{background:var(--blue-light)}
+.dda{width:36px;height:36px;border-radius:50%;background:var(--blue-light);color:var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.ddn{font-size:14px;font-weight:500}
+.ddc{font-size:12px;color:var(--muted);margin-top:1px}
+.empty{text-align:center;padding:4rem 1rem;color:var(--muted)}
+.empty svg{width:48px;height:48px;margin-bottom:1rem;opacity:.4}
+.empty p{font-size:14px;line-height:1.7}
+.loading{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;display:none}
+.spin{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+#scheda{display:none}
+#scheda.show{display:block}
+.ch{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.av{width:50px;height:50px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex-shrink:0}
+.cn{font-size:17px;font-weight:600}
+.cc{font-size:13px;color:var(--muted);margin-top:2px}
+.cm{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+.bp{background:var(--green-bg);color:var(--green)}
+.bn{background:var(--amber-bg);color:var(--amber)}
+.ba{background:var(--slate-bg);color:var(--slate)}
+.br{background:var(--red-bg);color:var(--red)}
+.lm{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.lm svg{width:13px;height:13px}
+.sec{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sh svg{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.sh-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;flex:1}
+.sh-edit{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;display:flex;align-items:center}
+.sh-edit:hover{color:var(--accent)}
+.sh-edit svg{width:14px;height:14px}
+.sb{font-size:14px;color:var(--text);line-height:1.65}
+ul.il{list-style:none}
+ul.il li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:1.5}
+ul.il li:last-child{border-bottom:none;padding-bottom:0}
+.ib{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:7px}
+.ar{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.ar:last-child{border-bottom:none;padding-bottom:0}
+.ar-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ar-check.done{background:var(--green);border-color:var(--green)}
+.ar-check.done svg{display:block}
+.ar-check svg{display:none;width:11px;height:11px;stroke:#fff;stroke-width:3;fill:none}
+.ar-body{flex:1;min-width:0}
+.ar-text{font-size:14px;color:var(--text);line-height:1.5}
+.ar-text.done{text-decoration:line-through;color:var(--muted)}
+.ar-due{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:3px}
+.ar-due svg{width:11px;height:11px}
+.ar-actions{display:flex;gap:6px;margin-top:6px}
+.ar-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer}
+.ar-btn:hover{background:var(--blue-light);color:var(--blue-mid);border-color:var(--accent)}
+.ar-btn.del:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.nd{font-size:13px;color:var(--muted);font-style:italic;padding:4px 0}
+.new-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,126,196,.3)}
+.new-btn:hover{background:var(--blue-mid)}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:var(--rs);padding:8px 14px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:1.25rem;width:100%;justify-content:center}
+.back-btn:hover{background:var(--blue-light)}
+.undo-bar{background:var(--amber-bg);border:1px solid #e6c84a;border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;display:none}
+.undo-bar.show{display:flex}
+.undo-text{font-size:13px;color:var(--amber)}
+.undo-btn{background:var(--amber);color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:var(--r) var(--r) 0 0;padding:1.5rem 1.25rem 2rem;width:100%;max-width:480px;max-height:92vh;overflow-y:auto}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
+.modal-title{font-size:17px;font-weight:600}
+.modal-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.modal-close{background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1;padding:0 0 0 8px}
+.rec-area{border:2px dashed var(--border);border-radius:var(--r);padding:2rem 1rem;text-align:center;margin-bottom:1rem;transition:border-color .2s}
+.rec-area.recording{border-color:var(--red);background:var(--red-bg)}
+.rec-btn{width:72px;height:72px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 4px 16px rgba(15,126,196,.3);transition:all .2s}
+.rec-btn.recording{background:var(--red)}
+.rec-btn svg{width:28px;height:28px;fill:#fff}
+.rec-timer{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.rec-hint{font-size:13px;color:var(--muted)}
+.tbox{width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;color:var(--text);line-height:1.6;resize:vertical;font-family:inherit;background:var(--bg);margin-bottom:1rem}
+.tbox:focus{outline:none;border-color:var(--accent)}
+.step-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;margin-top:1rem}
+.prompt-box{background:var(--blue-light);border:1px solid var(--border);border-radius:var(--rs);padding:1rem;font-size:12px;color:var(--text);line-height:1.6;margin-bottom:1rem;white-space:pre-wrap;max-height:180px;overflow-y:auto;font-family:monospace}
+.modal-actions{display:flex;flex-direction:column;gap:10px}
+.btn-primary{padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn-primary:hover{background:var(--blue-mid)}
+.btn-secondary{padding:12px;background:none;color:var(--accent);border:1.5px solid var(--accent);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn-secondary:hover{background:var(--blue-light)}
+.save-btn{padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.save-btn:disabled{opacity:.5;cursor:not-allowed}
+.modal-sep{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+.success-msg{background:var(--green-bg);color:var(--green);border-radius:var(--rs);padding:12px 16px;font-size:14px;font-weight:500;text-align:center;display:none;margin-bottom:.75rem}
+.error-msg{background:var(--red-bg);color:var(--red);border-radius:var(--rs);padding:12px 16px;font-size:13px;display:none;margin-bottom:.75rem}
+/* EDIT MODAL */
+.field-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;margin-top:1rem}
+.field-label:first-child{margin-top:0}
+.sel-field{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;color:var(--text);background:var(--white);margin-bottom:.5rem}
+.sel-field:focus{outline:none;border-color:var(--accent)}
+.add-action-row{display:flex;gap:8px;margin-bottom:.5rem}
+.add-action-row input{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;color:var(--text);background:var(--white)}
+.add-action-row input:focus{outline:none;border-color:var(--accent)}
+.add-action-row button{padding:9px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:13px;cursor:pointer;white-space:nowrap}
+.edit-action-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.edit-action-item:last-child{border-bottom:none}
+.edit-action-item input[type=text]{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:13px}
+.edit-action-item input[type=date]{padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:12px;color:var(--muted)}
+.edit-action-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
+    <div><div class="brand-title">CRM AI Assistant</div><div class="brand-sub">Scheda pre-incontro</div></div>
+  </div>
+  <div class="status"><div class="dot"></div><span id="st">Connessione...</span></div>
+</div>
+
+<div class="app">
+  <div class="search-wrap">
+    <div class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <input type="text" id="search" placeholder="Cerca cliente..." autocomplete="off"/>
+    <div id="dd"></div>
+  </div>
+  <div class="empty" id="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <p>Cerca un cliente per aprire<br>la scheda pre-incontro</p>
+  </div>
+  <div class="loading" id="loading"><div class="spin"></div>Caricamento...</div>
+  <div id="scheda"></div>
+</div>
+
+<!-- MODAL NUOVO INCONTRO -->
+<div class="modal-overlay" id="modal-memo">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="memo-title">Nuovo incontro</div><div class="modal-sub" id="memo-sub">Registra il memo vocale</div></div>
+      <button class="modal-close" onclick="closeModal('modal-memo')">×</button>
+    </div>
+
+    <div id="step1">
+      <div class="rec-area" id="rec-area">
+        <button class="rec-btn" id="rec-btn" onclick="toggleRec()">
+          <svg id="rec-icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <div class="rec-timer" id="rec-timer">0:00</div>
+        <div class="rec-hint" id="rec-hint">Tocca per iniziare la registrazione</div>
+      </div>
+      <div class="step-label">Trascrizione (modificabile)</div>
+      <textarea class="tbox" id="transcript" rows="5" placeholder="La trascrizione apparirà qui. Puoi anche scrivere o incollare il testo manualmente."></textarea>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="goToStep2()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Genera scheda con Claude
+        </button>
+      </div>
+    </div>
+
+    <div id="step2" style="display:none">
+      <div class="step-label">1 — Copia il prompt e incollalo in Claude.ai</div>
+      <div class="prompt-box" id="prompt-box"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-copy" onclick="copyPrompt()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copia prompt
+        </button>
+        <button class="btn-secondary" onclick="window.open('https://claude.ai','_blank')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri Claude.ai
+        </button>
+      </div>
+      <hr class="modal-sep">
+      <div class="step-label">2 — Incolla qui l'output di Claude</div>
+      <textarea class="tbox" id="ai-output" rows="8" placeholder="Incolla qui la scheda generata da Claude..."></textarea>
+      <div class="error-msg" id="memo-error"></div>
+      <div class="success-msg" id="memo-success">✓ Incontro salvato in Airtable</div>
+      <button class="save-btn" id="save-btn" onclick="saveIncontro()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>
+        Salva in Airtable
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODIFICA INCONTRO -->
+<div class="modal-overlay" id="modal-edit-inc">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Modifica incontro</div></div>
+      <button class="modal-close" onclick="closeModal('modal-edit-inc')">×</button>
+    </div>
+    <div class="field-label">Sintesi</div>
+    <textarea class="tbox" id="edit-sintesi" rows="4"></textarea>
+    <div class="field-label">Prossime azioni</div>
+    <textarea class="tbox" id="edit-prossime" rows="3"></textarea>
+    <div class="field-label">Sentiment</div>
+    <select class="sel-field" id="edit-sentiment-inc">
+      <option>Positivo</option><option>Neutro</option><option>In attesa</option><option>A rischio</option>
+    </select>
+    <div class="error-msg" id="edit-inc-error"></div>
+    <div class="success-msg" id="edit-inc-success">✓ Incontro aggiornato</div>
+    <button class="save-btn" onclick="saveEditIncontro()">Salva modifiche</button>
+  </div>
+</div>
+
+<!-- MODAL MODIFICA AZIONI -->
+<div class="modal-overlay" id="modal-edit-az">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Gestisci azioni</div><div class="modal-sub">Modifica, completa o aggiungi azioni</div></div>
+      <button class="modal-close" onclick="closeModal('modal-edit-az')">×</button>
+    </div>
+    <div class="add-action-row">
+      <input type="text" id="new-az-text" placeholder="Nuova azione..."/>
+      <input type="date" id="new-az-date"/>
+      <button onclick="addAzione()">+ Aggiungi</button>
+    </div>
+    <div id="edit-az-list"></div>
+    <div class="error-msg" id="edit-az-error" style="margin-top:.75rem"></div>
+    <div class="success-msg" id="edit-az-success" style="margin-top:.75rem">✓ Salvato</div>
+  </div>
+</div>
+
+<script>
+const TOKEN = "patdA1uCAKVfuj1uB.f2ce0ae9ca5f983013fa2d73712110bb203da681fe882d4f7ae61107cc5da51b";
+const BASE  = "appJC0nI2jmOlnX2x";
+const ROOT  = "https://api.airtable.com/v0";
+const HDR   = { Authorization: "Bearer " + TOKEN };
+
+let clienti=[], incontri=[], azioni=[], currentCliente=null;
+let undoStack = null; // {incId, azIds[], prevSentiment, prevData}
+let editingIncId = null;
+
+// ── PROMPT ──────────────────────────────────────────────────────────
+const PROMPT = `Sei un assistente specializzato nel supporto ai consulenti finanziari.
+Ricevi la trascrizione di un memo vocale registrato subito dopo un incontro.
+
+CLIENTE: {nome} — {azienda}
+OBIETTIVI: {obiettivi}
+ULTIMO INCONTRO PRECEDENTE: {precedente}
+
+TRASCRIZIONE MEMO:
+{trascrizione}
+
+Rispondi ESCLUSIVAMENTE nel formato seguente, senza introduzioni né commenti:
+
+##SINTESI##
+[3-5 righe sui fatti rilevanti emersi nell'incontro]
+
+##SEGNALI##
+- [segnale chiave 1: preoccupazione, opportunità o obiezione]
+- [segnale chiave 2]
+
+##SENTIMENT##
+[scrivi SOLO una di queste opzioni: Positivo | Neutro | In attesa | A rischio]
+Motivazione: [una riga]
+
+##AZIONI##
+- [descrizione azione concreta] | SCADENZA: [gg/mm/aaaa oppure nessuna]
+- [descrizione azione concreta] | SCADENZA: [gg/mm/aaaa oppure nessuna]
+
+##DOMANDE##
+- [domanda da porre al prossimo incontro]
+- [domanda da porre al prossimo incontro]
+
+##PROFILO##
+[aggiornamenti sul profilo del cliente emersi in questo incontro]`;
+
+// ── API ──────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { ...HDR, "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(ROOT + "/" + BASE + path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error?.message || JSON.stringify(data));
+  return data;
+}
+
+async function fetchAll(table, fields) {
+  let records=[], offset=null;
+  do {
+    const p = fields.map(f=>"fields[]="+encodeURIComponent(f));
+    if (offset) p.push("offset="+offset);
+    p.push("pageSize=100");
+    const r = await fetch(ROOT+"/"+BASE+"/"+encodeURIComponent(table)+"?"+p.join("&"),{headers:HDR});
+    const d = await r.json();
+    records = records.concat(d.records||[]);
+    offset = d.offset||null;
+  } while(offset);
+  return records;
+}
+
+async function reloadData() {
+  const [c,i,a] = await Promise.all([
+    fetchAll("Clienti",  ["Nome","Azienda","Obiettivi","Vincoli","Sentiment attuale","Ultimo incontro"]),
+    fetchAll("Incontri", ["Cliente","Data","Sintesi","Prossime azioni","Sentiment"]),
+    fetchAll("Azioni",   ["Cliente","Descrizione","Scadenza","Completata"])
+  ]);
+  clienti=c; incontri=i; azioni=a;
+}
+
+// ── PARSER OUTPUT CLAUDE ─────────────────────────────────────────────
+function parseOutput(text) {
+  const get = (tag) => {
+    const m = text.match(new RegExp("##"+tag+"##\\s*([\\s\\S]*?)(?=##|$)","i"));
+    return m ? m[1].trim() : "";
+  };
+  const sintesi      = get("SINTESI");
+  const segnali      = get("SEGNALI");
+  const sentimentRaw = get("SENTIMENT").split("\n")[0].trim();
+  const prossime     = get("AZIONI");
+  const domande      = get("DOMANDE");
+  const profilo      = get("PROFILO");
+
+  // Sentiment
+  let sentiment = "Neutro";
+  if (/positivo/i.test(sentimentRaw))   sentiment = "Positivo";
+  else if (/rischio/i.test(sentimentRaw)) sentiment = "A rischio";
+  else if (/attesa/i.test(sentimentRaw))  sentiment = "In attesa";
+
+  // Azioni: parse righe "- testo | SCADENZA: data"
+  const azLines = prossime.split("\n")
+    .map(l => l.replace(/^[-•*]\s*/,"").trim())
+    .filter(l => l.length > 3);
+
+  const azParsed = azLines.map(l => {
+    const parts = l.split("|");
+    const desc = parts[0].trim();
+    let scad = null;
+    if (parts[1]) {
+      const raw = parts[1].replace(/SCADENZA:\s*/i,"").trim();
+      if (raw && raw.toLowerCase() !== "nessuna") {
+        // Converte gg/mm/aaaa → aaaa-mm-gg
+        const dm = raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (dm) scad = `${dm[3]}-${dm[2].padStart(2,"0")}-${dm[1].padStart(2,"0")}`;
+      }
+    }
+    return { desc, scad };
+  }).filter(a => a.desc.length > 2);
+
+  const prossimeText = [segnali, domande, profilo].filter(Boolean).join("\n\n---\n\n");
+
+  return { sintesi, sentiment, prossimeText, azParsed };
+}
+
+// ── SALVATAGGIO INCONTRO ─────────────────────────────────────────────
+async function saveIncontro() {
+  const output = document.getElementById("ai-output").value.trim();
+  if (!output) { showMsg("memo-error","Incolla prima l'output di Claude."); return; }
+
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true; btn.textContent = "Salvataggio...";
+  hideMsg("memo-error"); hideMsg("memo-success");
+
+  try {
+    const { sintesi, sentiment, prossimeText, azParsed } = parseOutput(output);
+    const oggi = new Date().toISOString().split("T")[0];
+
+    // Salva sentiment precedente per undo
+    const prevSentiment = currentCliente.fields["Sentiment attuale"]?.name ||
+                          currentCliente.fields["Sentiment attuale"] || "Neutro";
+
+    // 1. Crea incontro
+    const incRes = await api("POST", "/Incontri", { records: [{ fields: {
+      "Cliente":         [currentCliente.id],
+      "Data":            oggi,
+      "Sintesi":         sintesi,
+      "Prossime azioni": prossimeText,
+      "Sentiment":       sentiment
+    }}]});
+    const newIncId = incRes.records[0].id;
+
+    // 2. Crea azioni (solo valide, non vuote)
+    let newAzIds = [];
+    if (azParsed.length > 0) {
+      const azBody = azParsed.map(a => {
+        const f = { "Cliente": [currentCliente.id], "Descrizione": a.desc };
+        if (a.scad) f["Scadenza"] = a.scad;
+        return { fields: f };
+      });
+      const azRes = await api("POST", "/Azioni", { records: azBody });
+      newAzIds = azRes.records.map(r => r.id);
+    }
+
+    // 3. Aggiorna cliente
+    await api("PATCH", "/Clienti/"+currentCliente.id, { fields: {
+      "Sentiment attuale": sentiment,
+      "Ultimo incontro":   oggi
+    }});
+
+    // Salva undo stack
+    undoStack = { incId: newIncId, azIds: newAzIds, prevSentiment, clienteId: currentCliente.id };
+
+    showMsg("memo-success", `✓ Salvato: ${azParsed.length} azioni create`);
+    btn.textContent = "✓ Salvato";
+
+    setTimeout(async () => {
+      await reloadData();
+      closeModal("modal-memo");
+      pick(currentCliente.id);
+    }, 1500);
+
+  } catch(e) {
+    showMsg("memo-error", "Errore: " + e.message);
+    btn.disabled = false;
+    btn.textContent = "Salva in Airtable";
+  }
+}
+
+// ── UNDO ──────────────────────────────────────────────────────────────
+async function undoSave() {
+  if (!undoStack) return;
+  try {
+    const { incId, azIds, prevSentiment, clienteId } = undoStack;
+    // Cancella incontro
+    await api("DELETE", `/Incontri/${incId}`, null);
+    // Cancella azioni
+    for (const id of azIds) await api("DELETE", `/Azioni/${id}`, null);
+    // Ripristina sentiment
+    await api("PATCH", "/Clienti/"+clienteId, { fields: { "Sentiment attuale": prevSentiment }});
+    undoStack = null;
+    document.getElementById("undo-bar").classList.remove("show");
+    await reloadData();
+    pick(clienteId);
+  } catch(e) {
+    alert("Errore undo: " + e.message);
+  }
+}
+
+// ── MODIFICA INCONTRO ────────────────────────────────────────────────
+function openEditIncontro(incId) {
+  const inc = incontri.find(r => r.id === incId);
+  if (!inc) return;
+  editingIncId = incId;
+  document.getElementById("edit-sintesi").value   = inc.fields["Sintesi"]||"";
+  document.getElementById("edit-prossime").value  = inc.fields["Prossime azioni"]||"";
+  const sen = inc.fields["Sentiment"]?.name || inc.fields["Sentiment"] || "Neutro";
+  document.getElementById("edit-sentiment-inc").value = sen;
+  hideMsg("edit-inc-error"); hideMsg("edit-inc-success");
+  document.getElementById("modal-edit-inc").classList.add("show");
+}
+
+async function saveEditIncontro() {
+  try {
+    const fields = {
+      "Sintesi":         document.getElementById("edit-sintesi").value.trim(),
+      "Prossime azioni": document.getElementById("edit-prossime").value.trim(),
+      "Sentiment":       document.getElementById("edit-sentiment-inc").value
+    };
+    await api("PATCH", "/Incontri/"+editingIncId, { fields });
+    showMsg("edit-inc-success", "✓ Incontro aggiornato");
+    await reloadData();
+    setTimeout(() => { closeModal("modal-edit-inc"); pick(currentCliente.id); }, 1000);
+  } catch(e) {
+    showMsg("edit-inc-error", "Errore: " + e.message);
+  }
+}
+
+// ── MODIFICA AZIONI ───────────────────────────────────────────────────
+function openEditAzioni() {
+  const az = azioni.filter(r =>
+    (r.fields["Cliente"]||[]).some(l => (typeof l==="string"?l:l.id) === currentCliente.id)
+  );
+  renderEditAzioni(az);
+  hideMsg("edit-az-error"); hideMsg("edit-az-success");
+  document.getElementById("new-az-text").value = "";
+  document.getElementById("new-az-date").value = "";
+  document.getElementById("modal-edit-az").classList.add("show");
+}
+
+function renderEditAzioni(az) {
+  const list = document.getElementById("edit-az-list");
+  if (!az.length) { list.innerHTML = '<div class="nd" style="padding:8px 0">Nessuna azione</div>'; return; }
+  list.innerHTML = az.map(a => {
+    const done = !!a.fields["Completata"];
+    const scad = a.fields["Scadenza"]||"";
+    return `<div class="edit-action-item" data-id="${a.id}">
+      <input type="checkbox" ${done?"checked":""} onchange="toggleAzione('${a.id}',this.checked)" title="${done?'Riapri':'Completa'}"/>
+      <input type="text" value="${(a.fields["Descrizione"]||"").replace(/"/g,'&quot;')}" 
+             onblur="updateAzioneText('${a.id}',this.value)" style="${done?'text-decoration:line-through;color:var(--muted)':''}"/>
+      <input type="date" value="${scad}" onchange="updateAzioneDate('${a.id}',this.value)"/>
+      <button class="edit-action-del" onclick="deleteAzione('${a.id}')" title="Elimina">×</button>
+    </div>`;
+  }).join("");
+}
+
+async function toggleAzione(id, done) {
+  try {
+    await api("PATCH", "/Azioni/"+id, { fields: { "Completata": done }});
+    await reloadData();
+    const az = azioni.filter(r =>
+      (r.fields["Cliente"]||[]).some(l => (typeof l==="string"?l:l.id) === currentCliente.id)
+    );
+    renderEditAzioni(az);
+    pick(currentCliente.id);
+  } catch(e) { showMsg("edit-az-error", "Errore: "+e.message); }
+}
+
+async function updateAzioneText(id, val) {
+  if (!val.trim()) return;
+  try { await api("PATCH", "/Azioni/"+id, { fields: { "Descrizione": val.trim() }}); await reloadData(); pick(currentCliente.id); }
+  catch(e) { showMsg("edit-az-error", "Errore: "+e.message); }
+}
+
+async function updateAzioneDate(id, val) {
+  try { await api("PATCH", "/Azioni/"+id, { fields: { "Scadenza": val||null }}); await reloadData(); pick(currentCliente.id); }
+  catch(e) { showMsg("edit-az-error", "Errore: "+e.message); }
+}
+
+async function deleteAzione(id) {
+  if (!confirm("Eliminare questa azione?")) return;
+  try {
+    await api("DELETE", "/Azioni/"+id, null);
+    await reloadData();
+    const az = azioni.filter(r =>
+      (r.fields["Cliente"]||[]).some(l => (typeof l==="string"?l:l.id) === currentCliente.id)
+    );
+    renderEditAzioni(az);
+    pick(currentCliente.id);
+  } catch(e) { showMsg("edit-az-error", "Errore: "+e.message); }
+}
+
+async function addAzione() {
+  const desc = document.getElementById("new-az-text").value.trim();
+  if (!desc) return;
+  const scad = document.getElementById("new-az-date").value||null;
+  try {
+    const fields = { "Cliente": [currentCliente.id], "Descrizione": desc };
+    if (scad) fields["Scadenza"] = scad;
+    await api("POST", "/Azioni", { records: [{ fields }]});
+    document.getElementById("new-az-text").value = "";
+    document.getElementById("new-az-date").value = "";
+    await reloadData();
+    const az = azioni.filter(r =>
+      (r.fields["Cliente"]||[]).some(l => (typeof l==="string"?l:l.id) === currentCliente.id)
+    );
+    renderEditAzioni(az);
+    pick(currentCliente.id);
+    showMsg("edit-az-success","✓ Azione aggiunta");
+  } catch(e) { showMsg("edit-az-error","Errore: "+e.message); }
+}
+
+// ── SPEECH ────────────────────────────────────────────────────────────
+let recognition=null, isRecording=false, timerInterval=null, seconds=0;
+
+function toggleRec(){ isRecording ? stopRec() : startRec(); }
+
+function startRec(){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  isRecording=true; seconds=0;
+  document.getElementById("rec-area").classList.add("recording");
+  document.getElementById("rec-btn").classList.add("recording");
+  document.getElementById("rec-icon").innerHTML='<rect x="6" y="6" width="12" height="12" rx="2"/>';
+  document.getElementById("rec-hint").textContent="In registrazione... tocca per fermare";
+  timerInterval=setInterval(()=>{ seconds++; const m=Math.floor(seconds/60),s=seconds%60; document.getElementById("rec-timer").textContent=m+":"+(s<10?"0":"")+s; },1000);
+  if (SR) {
+    recognition=new SR(); recognition.lang="it-IT"; recognition.continuous=true; recognition.interimResults=true;
+    let final="";
+    recognition.onresult=e=>{
+      let interim="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) final+=e.results[i][0].transcript+" ";
+        else interim=e.results[i][0].transcript;
+      }
+      document.getElementById("transcript").value=final+interim;
+    };
+    recognition.onerror=()=>stopRec();
+    recognition.start();
+  } else { document.getElementById("rec-hint").textContent="Browser non supportato — scrivi il memo qui sotto"; }
+}
+
+function stopRec(){
+  isRecording=false; clearInterval(timerInterval);
+  document.getElementById("rec-area").classList.remove("recording");
+  document.getElementById("rec-btn").classList.remove("recording");
+  document.getElementById("rec-icon").innerHTML='<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>';
+  document.getElementById("rec-hint").textContent="Registrazione completata.";
+  if(recognition) recognition.stop();
+}
+
+function goToStep2(){
+  const t=document.getElementById("transcript").value.trim();
+  if(!t){alert("Inserisci o registra il memo prima di procedere.");return;}
+  const f=currentCliente.fields;
+  const inc=incontri.filter(r=>(r.fields["Cliente"]||[]).some(l=>(typeof l==="string"?l:l.id)===currentCliente.id))
+                    .sort((a,b)=>new Date(b.fields["Data"]||0)-new Date(a.fields["Data"]||0));
+  const precedente=inc[0]?.fields["Sintesi"]||"Nessun incontro precedente registrato";
+  const prompt=PROMPT.replace("{nome}",f["Nome"]||"").replace("{azienda}",f["Azienda"]||"")
+    .replace("{obiettivi}",f["Obiettivi"]||"").replace("{precedente}",precedente).replace("{trascrizione}",t);
+  document.getElementById("prompt-box").textContent=prompt;
+  document.getElementById("step1").style.display="none";
+  document.getElementById("step2").style.display="block";
+  document.getElementById("memo-sub").textContent="Copia il prompt → Claude.ai → incolla l'output";
+}
+
+function copyPrompt(){
+  navigator.clipboard.writeText(document.getElementById("prompt-box").textContent).then(()=>{
+    const b=document.getElementById("btn-copy"); b.textContent="✓ Copiato!";
+    setTimeout(()=>{ b.textContent="Copia prompt"; },2000);
+  });
+}
+
+// ── RENDER SCHEDA ─────────────────────────────────────────────────────
+function ini(n){return(n||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase()}
+function bc(s){return{Positivo:"bp",Neutro:"bn","In attesa":"ba","A rischio":"br"}[s]||"bn"}
+function fmtDate(d){if(!d)return null;return new Date(d).toLocaleDateString("it-IT",{day:"numeric",month:"short",year:"numeric"})}
+function parseLines(t){return(t||"").split("\n").map(l=>l.replace(/^[-•*]\s*/,"").trim()).filter(Boolean)}
+
+const I={
+  user:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  notes:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  list:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+  cal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  back:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  edit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  mic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+  ck:`<polyline points="20 6 9 17 4 12"/>`
+};
+
+function render(cliente, incLatest, azioniCliente){
+  const f=cliente.fields;
+  const fi=incLatest?incLatest.fields:{};
+  const nom=f["Nome"]||"", azt=f["Azienda"]||"";
+  const sen=(f["Sentiment attuale"]||{}).name||f["Sentiment attuale"]||"Neutro";
+  const obi=f["Obiettivi"]||"", vin=f["Vincoli"]||"";
+  const dat=fi["Data"]?fmtDate(fi["Data"]):null;
+  const sin=fi["Sintesi"]||null;
+  const pro=parseLines(fi["Prossime azioni"]||"");
+  const incId=incLatest?.id||null;
+
+  const oHTML=[obi?"<strong>Obiettivi:</strong> "+obi:null,vin?"<strong>Vincoli:</strong> "+vin:null].filter(Boolean).join("<br><br>")||'<span class="nd">Nessuna informazione</span>';
+
+  const pHTML=pro.length
+    ? pro.map(a=>`<li><div class="ib"></div><span>${a}</span></li>`).join("")
+    : `<li><span class="nd">Nessuna azione dal precedente incontro</span></li>`;
+
+  const azAperte  = azioniCliente.filter(a=>!a.fields["Completata"]);
+  const azChiuse  = azioniCliente.filter(a=>!!a.fields["Completata"]);
+  const allAz     = [...azAperte, ...azChiuse];
+
+  const aHTML=allAz.length
+    ? allAz.map(a=>{
+        const done=!!a.fields["Completata"];
+        const d=a.fields["Scadenza"]?fmtDate(a.fields["Scadenza"]):null;
+        return `<div class="ar">
+          <div class="ar-check ${done?"done":""}" onclick="quickToggleAzione('${a.id}',${!done})" title="${done?"Riapri":"Segna completa"}">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" fill="none">${I.ck}</svg>
+          </div>
+          <div class="ar-body">
+            <div class="ar-text ${done?"done":""}">${a.fields["Descrizione"]||""}</div>
+            ${d?`<div class="ar-due">${I.clock}${d}</div>`:""}
+          </div>
+        </div>`;
+      }).join("")
+    : `<div class="nd">Nessuna azione</div>`;
+
+  const undoBar = undoStack
+    ? `<div class="undo-bar show" id="undo-bar"><span class="undo-text">⚠ Incontro appena salvato</span><button class="undo-btn" onclick="undoSave()">Annulla</button></div>`
+    : `<div class="undo-bar" id="undo-bar"><span class="undo-text">⚠ Incontro appena salvato</span><button class="undo-btn" onclick="undoSave()">Annulla</button></div>`;
+
+  document.getElementById("scheda").innerHTML=`
+    <button class="back-btn" onclick="resetSearch()">${I.back} Cerca un altro cliente</button>
+    ${undoBar}
+    <div class="ch">
+      <div class="av">${ini(nom)}</div>
+      <div><div class="cn">${nom}</div><div class="cc">${azt}</div>
+        <div class="cm"><span class="badge ${bc(sen)}">${sen}</span>${dat?`<span class="lm">${I.cal}${dat}</span>`:""}</div>
+      </div>
+    </div>
+    <button class="new-btn" onclick="openMemo()">${I.mic} Nuovo memo incontro</button>
+    <div class="sec">
+      <div class="sh">${I.user}<span class="sh-title">Chi è il cliente</span></div>
+      <div class="sb">${oHTML}</div>
+    </div>
+    <div class="sec">
+      <div class="sh">${I.notes}<span class="sh-title">Ultimo incontro${dat?" — "+dat:""}</span>
+        ${incId?`<button class="sh-edit" onclick="openEditIncontro('${incId}')" title="Modifica incontro">${I.edit}</button>`:""}</div>
+      <div class="sb">${sin||'<span class="nd">Nessun incontro registrato</span>'}</div>
+    </div>
+    <div class="sec">
+      <div class="sh">${I.list}<span class="sh-title">Prossime azioni dall'incontro</span></div>
+      <ul class="il">${pHTML}</ul>
+    </div>
+    <div class="sec">
+      <div class="sh">${I.check}<span class="sh-title">Azioni (${azAperte.length} aperte)</span>
+        <button class="sh-edit" onclick="openEditAzioni()" title="Gestisci azioni">${I.edit}</button></div>
+      ${aHTML}
+    </div>`;
+  document.getElementById("scheda").classList.add("show");
+}
+
+// ── TOGGLE RAPIDO AZIONE ─────────────────────────────────────────────
+async function quickToggleAzione(id, done){
+  try {
+    await api("PATCH","/Azioni/"+id,{fields:{"Completata":done}});
+    await reloadData();
+    pick(currentCliente.id);
+  } catch(e){ alert("Errore: "+e.message); }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function showMsg(id,msg){ const el=document.getElementById(id); el.textContent=msg; el.style.display="block"; }
+function hideMsg(id){ document.getElementById(id).style.display="none"; }
+
+function openMemo(){
+  document.getElementById("memo-title").textContent="Nuovo incontro — "+(currentCliente.fields["Nome"]||"");
+  document.getElementById("memo-sub").textContent="Registra il memo vocale";
+  document.getElementById("step1").style.display="block";
+  document.getElementById("step2").style.display="none";
+  document.getElementById("transcript").value="";
+  document.getElementById("ai-output").value="";
+  document.getElementById("rec-timer").textContent="0:00";
+  document.getElementById("rec-hint").textContent="Tocca per iniziare la registrazione";
+  document.getElementById("rec-area").classList.remove("recording");
+  document.getElementById("rec-btn").classList.remove("recording");
+  hideMsg("memo-error"); hideMsg("memo-success");
+  const b=document.getElementById("save-btn"); b.disabled=false; b.textContent="Salva in Airtable";
+  document.getElementById("modal-memo").classList.add("show");
+}
+
+function closeModal(id){
+  if(isRecording) stopRec();
+  document.getElementById(id).classList.remove("show");
+}
+
+function resetSearch(){
+  document.getElementById("search").value="";
+  const s=document.getElementById("scheda"); s.classList.remove("show"); s.innerHTML="";
+  document.getElementById("empty").style.display="block";
+  document.getElementById("search").focus();
+  currentCliente=null; undoStack=null;
+}
+
+function showDropdown(items){
+  const dd=document.getElementById("dd");
+  if(!items.length){dd.classList.remove("show");return;}
+  dd.innerHTML=items.map(c=>`<div class="ddi" data-id="${c.id}" tabindex="0"><div class="dda">${ini(c.fields["Nome"]||"")}</div><div><div class="ddn">${c.fields["Nome"]||""}</div><div class="ddc">${c.fields["Azienda"]||""}</div></div></div>`).join("");
+  dd.classList.add("show");
+  dd.querySelectorAll(".ddi").forEach(el=>{
+    el.addEventListener("click",()=>pick(el.dataset.id));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter")pick(el.dataset.id);});
+  });
+}
+
+function pick(cid){
+  const c=clienti.find(x=>x.id===cid); if(!c)return;
+  currentCliente=c;
+  document.getElementById("search").value=c.fields["Nome"]||"";
+  document.getElementById("dd").classList.remove("show");
+  document.getElementById("empty").style.display="none";
+  document.getElementById("loading").style.display="none";
+  const inc=incontri.filter(r=>(r.fields["Cliente"]||[]).some(l=>(typeof l==="string"?l:l.id)===cid))
+                    .sort((a,b)=>new Date(b.fields["Data"]||0)-new Date(a.fields["Data"]||0));
+  const az=azioni.filter(r=>(r.fields["Cliente"]||[]).some(l=>(typeof l==="string"?l:l.id)===cid));
+  render(c,inc[0]||null,az);
+}
+
+async function init(){
+  try{
+    document.getElementById("st").textContent="Caricamento...";
+    await reloadData();
+    document.getElementById("st").textContent=clienti.length+" clienti";
+    const inp=document.getElementById("search");
+    inp.addEventListener("input",()=>{
+      const q=inp.value.trim().toLowerCase();
+      if(!q){document.getElementById("dd").classList.remove("show");return;}
+      showDropdown(clienti.filter(x=>(x.fields["Nome"]||"").toLowerCase().includes(q)||(x.fields["Azienda"]||"").toLowerCase().includes(q)));
+    });
+    inp.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("dd").classList.remove("show");inp.blur();}});
+    document.addEventListener("click",e=>{if(!e.target.closest(".search-wrap"))document.getElementById("dd").classList.remove("show");});
+    ["modal-memo","modal-edit-inc","modal-edit-az"].forEach(id=>{
+      document.getElementById(id).addEventListener("click",function(e){if(e.target===this)closeModal(id);});
+    });
+  }catch(e){
+    document.getElementById("st").textContent="Errore";
+    document.getElementById("empty").innerHTML=`<p style="font-size:14px;color:#a02020">Errore: ${e.message}</p>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
